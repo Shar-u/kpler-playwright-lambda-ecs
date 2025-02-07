@@ -1,0 +1,10 @@
+requests
+deep-translator
+pandas
+openpyxl
+boto3
+googletrans==4.0.0rc1
+python-dotenv
+pdfplumber
+bs4
+beautifulsoup4
