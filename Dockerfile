@@ -8,9 +8,7 @@ RUN apt-get update && \
     apt-get install -y \
     unzip \
     libcurl4-openssl-dev \
-    python3.11 \
-    python3.11-distutils && \
-    python3.11 -m ensurepip --upgrade
+    python3.11
 
 
 # Include global arg in this stage of the build
@@ -23,11 +21,11 @@ COPY . ${FUNCTION_DIR}
 
 
 # Install the runtime interface client
-RUN pip3 install  \
+RUN pip install  \
     --target ${FUNCTION_DIR} \
     awslambdaric playwright
 
-RUN pip3 install  \
+RUN pip install  \
     -r requirements.txt \
     --target ${FUNCTION_DIR}
 
