@@ -1,18 +1,46 @@
-FROM public.ecr.aws/lambda/python@sha256:63811c90432ba7a9e4de4fe1e9797a48dae0762f1d56cb68636c3d0a7239ff68
-RUN dnf install -y unzip && \
-    curl -Lo "/tmp/chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/132.0.6834.159/linux64/chromedriver-linux64.zip" && \
-    curl -Lo "/tmp/chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/132.0.6834.159/linux64/chrome-linux64.zip" && \
-    unzip /tmp/chromedriver-linux64.zip -d /opt/ && \
-    unzip /tmp/chrome-linux64.zip -d /opt/
+# Define function directory
+ARG FUNCTION_DIR="/function"
 
-RUN dnf install -y atk cups-libs gtk3 libXcomposite alsa-lib \
-    libXcursor libXdamage libXext libXi libXrandr libXScrnSaver \
-    libXtst pango at-spi2-atk libXt xorg-x11-server-Xvfb \
-    xorg-x11-xauth dbus-glib dbus-glib-devel nss mesa-libgbm
-RUN pip install selenium==4.28.1
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
-RUN pip install playwright
-RUN playwright install --with-deps
-COPY . ./
+FROM mcr.microsoft.com/playwright:v1.46.1-jammy as build-image
+
+# Install aws-lambda-cpp build dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    unzip \
+    libcurl4-openssl-dev \
+    python3.11 \
+    python3.11-distutils && \
+    python3.11 -m ensurepip --upgrade
+
+
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR
+# Create function directory
+RUN mkdir -p ${FUNCTION_DIR}
+
+# Copy function code
+COPY . ${FUNCTION_DIR}
+
+
+# Install the runtime interface client
+RUN pip3 install  \
+    --target ${FUNCTION_DIR} \
+    awslambdaric playwright
+
+RUN pip3 install  \
+    -r requirements.txt \
+    --target ${FUNCTION_DIR}
+
+# Multi-stage build: grab a fresh copy of the base image
+FROM mcr.microsoft.com/playwright:v1.46.1-jammy
+
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR
+# Set working directory to function root directory
+WORKDIR ${FUNCTION_DIR}
+
+# Copy in the build image dependencies
+COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
+
+ENTRYPOINT [ "/usr/bin/python3", "-m", "awslambdaric" ]
 CMD [ "main.lambda_handler" ]
