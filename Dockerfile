@@ -3,12 +3,17 @@ ARG FUNCTION_DIR="/function"
 
 FROM mcr.microsoft.com/playwright:v1.46.1-jammy as build-image
 
-# Install aws-lambda-cpp build dependencies
 RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
     apt-get install -y \
-    unzip \
-    libcurl4-openssl-dev \
-    python3.11
+      unzip \
+      libcurl4-openssl-dev \
+      python3.11 \
+      python3.11-distutils && \
+    python3.11 -m ensurepip --upgrade
+
 
 
 # Include global arg in this stage of the build
