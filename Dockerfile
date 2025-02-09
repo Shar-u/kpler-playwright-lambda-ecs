@@ -17,7 +17,7 @@ ARG FUNCTION_DIR
 RUN mkdir -p ${FUNCTION_DIR}
 
 # Copy function code
-COPY . ${FUNCTION_DIR}
+COPY requirements.txt ${FUNCTION_DIR}
 
 
 # Install the runtime interface client
@@ -29,6 +29,7 @@ RUN pip3 install  \
     -r ${FUNCTION_DIR}/requirements.txt \
     --target ${FUNCTION_DIR}
 
+COPY . ${FUNCTION_DIR}
 # Multi-stage build: grab a fresh copy of the base image
 FROM mcr.microsoft.com/playwright:v1.46.1-jammy
 
