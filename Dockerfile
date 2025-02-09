@@ -3,17 +3,12 @@ ARG FUNCTION_DIR="/function"
 
 FROM mcr.microsoft.com/playwright:v1.46.1-jammy as build-image
 
+# Install aws-lambda-cpp build dependencies
 RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
     apt-get install -y \
-      unzip \
-      libcurl4-openssl-dev \
-      python3.11 \
-      python3.11-distutils && \
-    python3.11 -m ensurepip --upgrade
-
+    unzip \
+    libcurl4-openssl-dev \
+    python3-pip
 
 
 # Include global arg in this stage of the build
@@ -26,12 +21,12 @@ COPY . ${FUNCTION_DIR}
 
 
 # Install the runtime interface client
-RUN pip install  \
+RUN pip3 install  \
     --target ${FUNCTION_DIR} \
     awslambdaric playwright
 
-RUN pip install  \
-    -r requirements.txt \
+RUN pip3 install  \
+    -r ${FUNCTION_DIR}/requirements.txt \
     --target ${FUNCTION_DIR}
 
 # Multi-stage build: grab a fresh copy of the base image
